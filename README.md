@@ -3,7 +3,7 @@
 # PiWall
 The PiWall project is a secure low-level network firewall with enchanced flexibility as its policies and rules may directly be defined in Python.
 
-## Learn
+## Learn - Project
 PiWall can:
 * Monitor your traffic
 * Firewall your traffic
@@ -29,7 +29,7 @@ In the repository you may find four python files:
 * init_firewall.py: lets you start a bridge connection with firewall
 * d_init_firewall.py start|stop|restart: lets you start the firewall bridge as a daemon service
 
-## register firewall-bridge on system's start
+## Register firewall-bridge on system's start
 In order to register the firewall service on system's start you should set an init script as defined below:
 ```
 sudo nano /etc/init.d/init_firewall
