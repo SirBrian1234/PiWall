@@ -1,7 +1,7 @@
 # Under Dev
 
 # PiWall
-The PiWall project is a secure low-level network firewall with enchanced flexibility as its policies and rules may directly be defined in Python.
+The PiWall project is a secure and standalone low-level network firewall with enchanced flexibility as its policies and rules may directly be defined in Python.
 
 ## Learn - Project
 PiWall can:
