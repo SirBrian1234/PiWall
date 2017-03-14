@@ -74,7 +74,7 @@ sudo python3 /home/pi/PiWall/piwall.py &
 sudo chmod +x /etc/init.d/init_piwall
 sudo update-rc.d init_piwall defaults
 ```
-## What's alleready there
+## What's already there
 PiWall as it is right now may let you use the following attributes:
 let you use a frame's type, source and destination mac addresses.
 let you use IPv4 source, destination and protocol
