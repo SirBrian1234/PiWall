@@ -51,22 +51,25 @@ sudo nano /etc/init.d/init_piwall
 #!/bin/bash
 
 ### BEGIN INIT INFO
-# Provides: init_gps
+# Provides: init_piwall
 # Required-Start: $all
 # Required-Stop:
 # Default-Start: 4
 # Default-Stop:
-# Short-Description: inits piwall
-# Description: inits piwall
+# Short-Description: This script intialises piwall.
+# Description: This script inits piwall.
 ### END INIT INFO
 
 (
+ifconfig eth0 down
 ifconfig eth1 up
 ifconfig eth1 promisc
 ifconfig eth2 up
 ifconfig eth2 promisc
 sleep 5
 sudo python3 /home/pi/PiWall/piwall.py &
+sleep 10
+ifconfig eth0 up
 ) > /home/pi/init_piwall.log
 ```
 
