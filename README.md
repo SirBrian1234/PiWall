@@ -76,15 +76,15 @@ sudo update-rc.d init_piwall defaults
 ```
 ## What's already there
 PiWall as it is right now may let you use the following attributes:
-let you use a frame's type, source and destination mac addresses.
-let you use IPv4 source, destination and protocol
-let you use source port and destination port of TCP, UDP protocols
+* let you use a frame's type, source and destination mac addresses.
+* let you use IPv4 source, destination and protocol
+* let you use source port and destination port of TCP, UDP protocols
 
 Functional:
-PiWall has external host mac whitelist and internal host mac whitelist
-Mac to Ip table to prevent IP address spoofing
-Let's you define whether a host may be treated as client or as a server
-Defined policies about ARP DHCP and IPv4 protocol behaviours
+* PiWall has external host mac whitelist and internal host mac whitelist
+* Mac to Ip table to prevent IP address spoofing
+* Let's you define whether a host may be treated as client or as a server
+* Defined policies about ARP DHCP and IPv4 protocol behaviours
 
 ## License
 The project's article and source are licensed under Creative Commons Atribution 4.0 International: https://creativecommons.org/licenses/by/4.0/
