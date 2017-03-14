@@ -47,25 +47,41 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
    #first check if ipv4
    if dict_eth['EtherType'] == 'IPv4':     
      
-     # this block is both for incoming and outcoming packets and checks whether there is a relation towards a known mac and ip address
+     # this block is both for incoming and outcoming packets and checks whether there is a relation towards a known mac and ip address    
+     zero_source = False
+     zero_dest = False
+     broadcast_source = False
+     broadcast_dest = False
      known_dest_ip = False
      known_source_ip = False
+
      is_source_server = False
      is_dest_server = False
-     found = False         
-     for i in range (0, len(known_ips_to_mac)):
-       if known_ips_to_mac[i][0].lower()==dict_eth['source'] and known_ips_to_mac[i][1]==dict_ipv4['source']:
-          known_source_ip = True
-          is_source_server = known_ips_to_mac[i][2]
-     if not known_source_ip:
-        reason = 'Could not verify known mac-to-ip relation for source mac '+dict_eth['source']+' with ip addr '+dict_ipv4['source']
+     server_allowed_ports = []
      
-     for i in range (0, len(known_ips_to_mac)):
-       if known_ips_to_mac[i][0].lower()==dict_eth['destination'] and known_ips_to_mac[i][1]==dict_ipv4['destination']:
-          known_dest_ip = True        
-          is_dest_server = known_ips_to_mac[i][2]
-     if not known_dest_ip:
-        reason = 'Could not verify known mac-to-ip relation for destination mac '+dict_eth['destination']+' with ip addr '+dict_ipv4['destination']
+     if dict_eth['source'] == '0.0.0.0':
+        zero_source = True
+     elif dict_eth['source'] == '255.255.255.255':
+        broadcast_source = True
+     else:
+        for i in range (0, len(known_ips_to_mac)):
+          if known_ips_to_mac[i][0].lower()==dict_eth['source'] and known_ips_to_mac[i][1]==dict_ipv4['source']:
+             known_source_ip = True
+             is_source_server = known_ips_to_mac[i][2]
+             if is_source_server:
+                server_allowed_ports = known_ips_to_mac[i][3]
+     
+     if dict_eth['destination'] == '0.0.0.0':
+        zero_dest = True
+     elif dict_eth['destination'] == '255.255.255.255':
+        broadcast_dest = True
+     else:
+        for i in range (0, len(known_ips_to_mac)):
+          if known_ips_to_mac[i][0].lower()==dict_eth['destination'] and known_ips_to_mac[i][1]==dict_ipv4['destination']:
+             known_dest_ip = True        
+             is_dest_server = known_ips_to_mac[i][2]
+             if is_dest_server:
+                server_allowed_ports = known_ips_to_mac[i][3]
 
      # from the network ahead our FW we accept to exchange data only with the GW
      # we allow broadcast and zero ips only for the DHCP
@@ -95,27 +111,32 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
                      # now we need to block ports
                      if is_dest_server:
                         allow = True
-                     elif int(dict_transport['destination']) >= 6000:
+                     elif int(dict_transport['destination']) >= 1024:
                         allow = True
                      else:                        
-                        reason = 'Destination port '+dict_transport['destination']+' is not allowed for a non-server host'
+                        reason = 'Destination port '+dict_transport['destination']+' is not allowed for a non-server host for '+dict_ipv4['Protocol']+" between "+dict_eth['source']+'/'+dict_ipv4['source']+':'+dict_transport['source']+' and '+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
+                  else:
+                     reason = 'Could not verify known mac-to-ip relation for destination mac '+dict_eth['destination']+' with ip addr '+dict_ipv4['destination']
 
                elif dict_ipv4['Protocol'] == 'TCP':
                    if known_dest_ip:
                      # now we need to block ports for non server and allow ports on servers
                      if is_dest_server:
                         allow = True
-                     elif int(dict_transport['destination']) >= 6000:
+                     elif int(dict_transport['destination']) >= 1024:
                         allow = True 
                      else:                     
-                        reason = 'Destination port '+dict_transport['destination']+' is not allowed for a non-server host'   
+                        reason = 'Destination port '+dict_transport['destination']+' is not allowed for a non-server host for '+dict_ipv4['Protocol']+" between "+dict_eth['source']+'/'+dict_ipv4['source']+':'+dict_transport['source']+' and '+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
+                   else:
+                      reason = 'Could not verify known mac-to-ip relation for destination mac '+dict_eth['destination']+' with ip addr '+dict_ipv4['destination']
                else:               
-                  reason = 'Not allowed transport protocol ['+dict_ipv4['Protocol']+']'
+                  reason = 'Not allowed transport protocol ['+dict_ipv4['Protocol']+'] detected from '+dict_eth['source']+'/'+dict_ipv4['source']
             else: 
-               reason = 'Not allowed destination host mac address ['+dict_eth['destination']+']'
+               reason = 'Inner host ['+dict_eth['source']+'] attempted to connect to non allowed destination host mac address ['+dict_eth['destination']+']'
          else:            
-             reason = 'Outer non allowed host ['+dict_eth['source']+'] attempted to contact inner host'
+             reason = 'Outer non allowed host ['+dict_eth['source']+'] attempted to connect to inner host ['+dict_eth['destination']+']'
      
+     # outcoming
      else:
         #print('fw outcoming') 
         #print (dict_eth['source'])
@@ -124,7 +145,7 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
         for i in range (0, len(allowed_external_host_macs)):
            if allowed_external_host_macs[i].lower()==dict_eth['destination']:
               found = True
-
+     
         if found:
             found = False
             for i in range (0, len(allowed_host_macs)):
@@ -134,26 +155,30 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
             if found:
                #print('after mac verify')
                if dict_ipv4['Protocol'] == 'UDP':
-                  if dict_transport['source']=='67' or dict_transport['source']=='68':
+                  if dict_transport['source']=='67' or dict_transport['source']=='68' and (dict_transport['destination']=='67' or dict_transport['destination']=='68'):
                      allow = True
                      # from this point on we do not allow special ips. dhcp needs 0 and 255
                   elif known_source_ip:                   
                      if is_source_server:
                         allow = True
-                     elif int(dict_transport['source']) >= 6000:
+                     elif int(dict_transport['source']) >= 1024:
                         allow = True
                      else:                        
                         reason = 'Source port '+dict_transport['source']+' is not allowed for a non-server host'
+                  else:
+                     reason = 'Could not verify known mac-to-ip relation for source mac '+dict_eth['source']+' with ip addr '+dict_ipv4['source']
+
                elif dict_ipv4['Protocol'] == 'TCP':
                      if known_source_ip:
                         if is_source_server:
                            allow = True
-                        elif int(dict_transport['source']) >= 6000:
+                        elif int(dict_transport['source']) >= 1024:
                            allow = True
-                        else:                           
-                           reason = 'Source port '+dict_transport['source']+' is not allowed for a non-server host'                                         
-               else:
-                  allow = False
+                        else:
+                           reason = 'Source port '+dict_transport['source']+' is not allowed for a non-server host'
+                     else:
+                        reason = 'Could not verify known mac-to-ip relation for source mac '+dict_eth['source']+' with ip addr '+dict_ipv4['source']   
+               else:                  
                   reason = 'Not allowed transport protocol ['+dict_ipv4['Protocol']+']'
             else:
                reason = 'Not allowed source host mac address ['+dict_eth['source']+']'
@@ -256,14 +281,14 @@ def from_ethA_to_ethB(s1,s2,incoming):
       monitor(frame_id,incoming,hex_str_frame,dict_eth,dict_ipv4,dict_transport)
       if firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transport):
          s2.send(modify(frame))
-      #frame_id = frame_id + 1
+      frame_id = frame_id + 1
 
 try:
    s1 = socket.socket(socket.PF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
    s2 = socket.socket(socket.PF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
    s1.bind(("eth1", 0))
    s2.bind(("eth2", 0))   
-   _thread.start_new_thread( from_ethA_to_ethB, (s1,s2,False, ))
-   from_ethA_to_ethB(s2,s1,True)
+   _thread.start_new_thread( from_ethA_to_ethB, (s1,s2,True, ))
+   from_ethA_to_ethB(s2,s1,False)
 except:
    raise
