@@ -9,7 +9,7 @@ PiWall can:
 * Firewall your traffic
 * Modify your traffic on the fly
 
-In order to learn more about PiWall, how PiWall works and how to build and set up your own device, please view PiWall's project page from here:
+In order to learn more about PiWall, how PiWall works and how to build and set up your own device, please visit PiWall's project page from here:
 [...]
 
 ## Install Source Code
@@ -19,15 +19,27 @@ In order to install the project's source code from your raspberry pi/raspbian ru
 sudo apt-get update
 sudo apt-get install git python3 python3-pip
 git clone https://github.com/kostiskag/PiWall.git
-cd PiWall
 ```
 
 ## Learn - Source code
 In the repository you may find four python files:
-* network_rules.py: lets you define your network rules
-* firewall.py: lets you define your firewall's monitor policy and modify behaviour
-* init_firewall.py: lets you start a bridge connection with firewall
-* d_init_firewall.py start|stop|restart: lets you start the firewall bridge as a daemon service
+* configure.py: lets you define your network rules
+* piwall.py: lets you define your firewall's monitor policy and modify behaviour
+* piwall-learn.py: lets you start a simple bridge connection in order to understand how piwall works
+
+## Edit 
+Edit configure.py in order to set your personalised network
+```
+cd PiWall
+nano configure.py
+nano firewall.py
+```
+
+## Run
+```
+cd PiWall
+sudo python3 pywall.py
+```
 
 ## Register firewall-bridge on system's start
 In order to register the firewall service on system's start you should set an init script as defined below:
@@ -52,6 +64,7 @@ python3 d_init_firewall.py start
 
 ```
 sudo chmod +x /etc/init.d/init_firewall
+sudo update-rc.d init_firewall defaults
 ```
 
 ## License
