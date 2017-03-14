@@ -41,8 +41,8 @@ cd PiWall
 sudo python3 pywall.py
 ```
 
-## Register firewall-bridge on system's start
-In order to register the firewall service on system's start you should set an init script as defined below:
+## Register PiWall on system's start
+In order to register the PiWall service on system's start you should set an init script as defined below:
 ```
 sudo nano /etc/init.d/init_firewall
 ```
@@ -56,8 +56,8 @@ sudo nano /etc/init.d/init_firewall
 # Required-Stop:
 # Default-Start: 4
 # Default-Stop:
-# Short-Description: Initialises the bridge and firewall service.
-# Description: Inits the br and fw service.
+# Short-Description: inits piwall
+# Description: inits piwall
 ### END INIT INFO
 python3 d_init_firewall.py start
 ```
