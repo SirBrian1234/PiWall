@@ -40,6 +40,7 @@ nano firewall.py
 cd PiWall
 sudo python3 pywall.py
 ```
+Repeat the edit and run steps until PiWall is configured according to your network needs.
 
 ## Register PiWall on system's start
 In order to register the PiWall service on system's start you should set an init script as defined below. You should have your two interfaces in promiscious mode in order to let piwall to be able to read and write frames in the interface.
@@ -78,24 +79,25 @@ sudo chmod +x /etc/init.d/init_piwall
 sudo update-rc.d init_piwall defaults
 ```
 
-## Debug
-* You should make sure that eth1 is connected with the gateway and eh2 are the internal hosts. In order to check that do:
-  ```
-  ifconfig
-  ```
-  And view if eth1 got the ip address, if not, swap the cables
+## Debugging
+You should make sure that the eth1 interface is connected with the gateway and eth2 are the internal hosts. In order to check that do:
+```
+ifconfig
+```
+And view if eth1 got the ip address, if not, swap the ethernet cables but do not plug out the usb adapters.
 
-* To check the registered service's state you may do:
-  ```
-  cat /home/pi/init_piwall.log | less
-  ```
-* To kill the service and start a new one from the terminal:
-  ```
-  sudo killall python3
-  cd /home/pi/PiWall
-  sudo python3 piwall.py
-  ```
-  When everything is ok you may restart the system
+To check the registered service's state you may do:
+```
+cat /home/pi/init_piwall.log | less
+```
+
+To kill the service and start a new one from the terminal:
+```
+sudo killall python3
+cd /home/pi/PiWall
+sudo python3 piwall.py
+```
+When everything is ok you may restart the system.
   
 ## What's already there
 PiWall, as it is right now, has the following logic:
@@ -118,4 +120,5 @@ Functional:
 ## License
 The project's article and source are licensed under Creative Commons Atribution 4.0 International: https://creativecommons.org/licenses/by/4.0/
 
-You may use the source code commercially. If you are using this project in another project/work, you should provide attribution for all the authors involved in this project in a noticable spot or in the bibliography.
+You may use the source code commercially.
+You should provide attribution for all the authors involved in this project.
