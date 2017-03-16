@@ -11,7 +11,7 @@ PiWall can:
 * Provide live information for all the above
 
 In order to learn more about PiWall, how PiWall works, how to build and set up your own device, please visit PiWall's project page from here:
-[...]
+[..the project's page is currently under dev..]
 
 ## Install Source Code
 In order to install the project's source code from your raspberry pi/raspbian run the following commands:
