@@ -42,24 +42,72 @@ def monitor(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transpo
 
 def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transport):   
    reason = ''
+   bc_mac = 'ff:ff:ff:ff:ff:ff'
+   zero_mac = '00:00:00:00:00:00' 
+   int_pos = -1
+   ext_pos = -1
+
+   zero_source_mac = False
+   zero_dest_mac = False
+   broadcast_source_mac = False
+   broadcast_dest_mac = False
+
+   gw_source_mac = False
+   gw_dest_mac = False
+
+   known_internal_source_mac = False
+   known_internal_dest_mac = False
+   known_external_source_mac = False
+   known_external_dest_mac = False
    
+   if dict_eth['source'] == zero_mac:
+      zero_source_mac = True
+   elif dict_eth['source'] == bc_mac:
+      broadcast_source_mac = True
+
+   if dict_eth['destination'] == zero_mac:
+      zero_dest_mac = True
+   elif dict_eth['destination'] == bc_mac:
+      broadcast_dest_mac = True
+
+   if incoming:
+      if not zero_source_mac and not broadcast_source_mac:
+          if dict_eth['source'] == gateway[0].lower():
+             gw_source_mac = True
+             
+          else:
+             for i in range (0, len(allowed_external_hosts)):
+                if allowed_external_hosts[i][0].lower()==dict_eth['source']:
+                   known_external_source_mac = True                 
+                   ext_pos = i
+
+      if not zero_dest_mac and not broadcast_dest_mac:
+         for i in range (0, len(allowed_internal_hosts)):
+            if allowed_internal_hosts[i][0].lower()==dict_eth['destination']:
+               known_internal_dest_mac = True
+               int_pos = i
+                                        
+   else:
+      if not zero_dest_mac and not broadcast_dest_mac:
+          if dict_eth['destination'] == gateway[0].lower():
+             gw_dest_mac = True
+             
+          else:
+             for i in range (0, len(allowed_external_hosts)):
+                if allowed_external_hosts[i][0].lower()==dict_eth['destination']:
+                   known_external_dest_mac = True                   
+                   ext_pos = i
+
+      if not zero_source_mac and not broadcast_source_mac:
+          for i in range (0, len(allowed_internal_hosts)):
+             if allowed_internal_hosts[i][0].lower()==dict_eth['source']:
+                known_internal_source_mac = True              
+                int_pos = i
+
    # first check if ipv4
    if dict_eth['EtherType'] == 'IPv4':     
      
-     # this block is both for incoming and outcoming packets and checks whether there is a relation towards a known mac and ip address    
-     zero_source_mac = False
-     zero_dest_mac = False
-     broadcast_source_mac = False
-     broadcast_dest_mac = False
-     
-     gw_source_mac = False
-     gw_dest_mac = False     
-
-     known_internal_source_mac = False
-     known_internal_dest_mac = False
-     known_external_source_mac = False
-     known_external_dest_mac = False
-
+     # this block is both for incoming and outcoming packets and checks whether there is a relation towards a known mac and ip address       
      zero_source_ip = False
      zero_dest_ip = False
      broadcast_source_ip = False
@@ -76,17 +124,7 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
      is_source_server = False
      is_dest_server = False
      server_allowed_ports = []
-     
-     if dict_eth['source'] == 'ff:ff:ff:ff:ff:ff':
-        zero_source_mac = True
-     elif dict_eth['source'] == 'ff:ff:ff:ff:ff:ff':
-        broadcast_source_mac = True
-
-     if dict_eth['destination'] == 'ff:ff:ff:ff:ff:ff':
-        zero_dest_mac = True
-     elif dict_eth['destination'] == 'ff:ff:ff:ff:ff:ff':
-        broadcast_dest_mac = True
-     
+          
      if dict_ipv4['source'] == '0.0.0.0':
         zero_source_ip = True
      elif dict_ipv4['source'] == '255.255.255.255':
@@ -98,57 +136,56 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
         broadcast_dest_ip = True
 
      if incoming:
-        if not zero_source_mac and not broadcast_source_mac:
-            if dict_eth['source'] == gateway[0].lower():
-               gw_source_mac = True
-               if dict_ipv4['source'] == gateway[1]:
-                  gw_source_ip = True
-            else:
-               for i in range (0, len(allowed_external_hosts)):
-                  if allowed_external_hosts[i][0].lower()==dict_eth['source']:
-                     known_external_source_mac = True
-                     if allowed_external_hosts[i][1] == dict_ipv4['source']:
-                        known_external_source_ip = True
+        if gw_source_mac:         
+           if dict_ipv4['source'] == gateway[1]:
+              gw_source_ip = True
+      
+        elif known_external_source_mac:
+           if allowed_external_hosts[ext_pos][1] == dict_ipv4['source']:
+              known_external_source_ip = True
         
-        if not zero_dest_mac and not broadcast_dest_mac:
-           for i in range (0, len(allowed_internal_hosts)):
-              if allowed_internal_hosts[i][0].lower()==dict_eth['destination']:
-                 known_internal_dest_mac = True
-                 if allowed_internal_hosts[i][1] == dict_ipv4['destination']:
-                    known_internal_dest_ip = True
-                    if allowed_internal_hosts[i][2]: # if is server
-                       is_dest_server = True
-                       server_allowed_ports = allowed_internal_hosts[i][3]
+        if known_internal_dest_mac:
+           if allowed_internal_hosts[int_pos][1] == dict_ipv4['destination']:
+              known_internal_dest_ip = True
+              if allowed_internal_hosts[int_pos][2]: # if is server
+                 is_dest_server = True
+                 server_allowed_ports = allowed_internal_hosts[i][3]
+
      else:        
-        if not zero_dest_mac and not broadcast_dest_mac:
-            if dict_eth['destination'] == gateway[0].lower():
-               gw_dest_mac = True
-               if dict_ipv4['destination'] == gateway[1]:
-                  gw_dest_ip = True
-            else:
-               for i in range (0, len(allowed_external_hosts)):
-                  if allowed_external_hosts[i][0].lower()==dict_eth['destination']:
-                     known_external_dest_mac = True
-                     if allowed_external_hosts[i][1] == dict_ipv4['destination']:
-                        known_external_dest_ip = True
+        if gw_dest_mac:
+           if dict_ipv4['destination'] == gateway[1]:
+              gw_dest_ip = True
 
-        if not zero_source_mac and not broadcast_source_mac:
-            for i in range (0, len(allowed_internal_hosts)):
-               if allowed_internal_hosts[i][0].lower()==dict_eth['source']:
-                  known_internal_source_mac = True
-                  if allowed_internal_hosts[i][1] == dict_ipv4['source']:
-                     known_internal_source_ip = True
-                     if allowed_internal_hosts[i][2]: # if is server
-                       is_source_server = True
-                       server_allowed_ports = allowed_internal_hosts[i][3]
+        elif known_external_dest_mac:
+           if allowed_external_hosts[ext_pos][1] == dict_ipv4['destination']:
+              known_external_dest_ip = True
 
+        if known_internal_source_mac:
+           if allowed_internal_hosts[int_pos][1] == dict_ipv4['source']:
+              known_internal_source_ip = True
+              if allowed_internal_hosts[int_pos][2]: # if is server
+                 is_source_server = True
+                 server_allowed_ports = allowed_internal_hosts[i][3]
+     
+     #print('IPv4')
+     #print('source '+dict_ipv4['source'])
+     #print('dest '+dict_ipv4['destination'])
+     #print('broadcast_source_ip '+str(broadcast_source_ip))
+     #print('gw_source_ip '+str(gw_source_ip))
+     #print('known_external_source_ip '+str(known_external_source_ip))
+     #print('known_internal_source_ip '+str(known_internal_source_ip))
+     #print()
+     #print('broadcast_dest_ip ',str(broadcast_dest_ip))
+     #print('gw_dest_ip ',str(gw_dest_ip))
+     #print('known_external_dest_ip ',str(known_external_dest_ip))
+     #print('known_internal_dest_ip ',str(known_internal_dest_ip))
 
      if incoming:        
         if gw_source_mac:           
-           if not gw_source_ip:           
-              # wan packets here
+           if not gw_source_ip:                       
               if known_internal_dest_mac:               
-                 if known_internal_dest_ip:                   
+                 if known_internal_dest_ip:
+                    #IPv4 WAN Incoming traffic                   
                     if dict_ipv4['Protocol'] == 'UDP':
                        if is_dest_server:
                           for i in range (0, len(server_allowed_ports)):
@@ -176,26 +213,29 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
               else:
                   reason = 'Received peculiar frame from GW with non allowed destination mac '+dict_eth['destination']
            else:
-              # packet from host/gw and not from wan
-              if dict_ipv4['Protocol'] == 'UDP':
-                 for i in range (0, len(gateway[2])):
-                    if gateway[2][i] == int(dict_transport['source']):                       
-                       verbose("Received IP/UDP datagramm from host/GW protocol of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
+              # Incoming traffic from gw as a host
+              if dict_ipv4['Protocol'] == 'ICMP':
+                 return True
+              elif dict_ipv4['Protocol'] == 'UDP':
+                 for i in range (0, len(gateway[3])):
+                    if gateway[3][i] == int(dict_transport['source']):                       
+                       verbose("Allowed, IPv4/UDP datagramm from host/GW protocol of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
                        return True
-                 reason = "Dropped non-allowed IP/UDP datagramm sent from host/gw of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
+                 reason = "non-allowed IPv4/UDP datagramm sent from host/gw of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
               elif dict_ipv4['Protocol'] == 'TCP':
-                 for i in range (0, len(gateway[2])):
-                    if gateway[2][i] == int(dict_transport['source']):
-                       verbose("Received IP/TCP segment from host/GW protocol of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
+                 for i in range (0, len(gateway[3])):
+                    if gateway[3][i] == int(dict_transport['source']):
+                       verbose("Allowed, IPv4/TCP segment from host/GW protocol of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
                        return True
-                 reason = "Dropped non-allowed IP/TCP segment sent from host/gw of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
+                 reason = "non-allowed IPv4/TCP segment sent from host/gw of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
               else:
-                 reason = "Dropped received IP packet from host/GW of non-allowed transport protocol ["+dict_ipv4['Protocol']+"] for "+dict_eth['destination']+'/'+dict_ipv4['destination']
+                 reason = "received IPv4 packet from host/GW of non-allowed transport protocol ["+dict_ipv4['Protocol']+"] for "+dict_eth['destination']+'/'+dict_ipv4['destination']
+
         elif known_external_source_mac:
-           if known_external_source_ip:
-              # packet from a known external host
+           if known_external_source_ip:             
               if known_internal_dest_mac:
                  if known_internal_dest_ip:
+                    # Incoming traffic from allowed external hosts
                     if dict_ipv4['Protocol'] == 'UDP':
                        if is_dest_server:
                           for i in range (0, len(server_allowed_ports)):
@@ -237,14 +277,90 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
      # dhcp packets
      if dict_ipv4['Protocol'] == 'UDP':
         if (dict_transport['source']=='67' or dict_transport['source']=='68') and (dict_transport['destination']=='67' or dict_transport['destination']=='68'):
-           verbose('DHCP packet fired from '+dict_eth['source']+' to '+dict_eth['destination'],1)
+           verbose('Allowed, DHCP packet fired from '+dict_eth['source']+' to '+dict_eth['destination'],1)
            return True
 
-   # then check if arp
-   # all arps allowed
-   elif dict_eth['EtherType'] == 'ARP':
-      verbose('ARP frame fired from '+dict_eth['source']+' to '+dict_eth['destination'],1)
-      return True         
+   #
+   # IPv6
+   #
+   # some routers or gateways need to send/receive IPv6 packets
+   # for this reason IPv6 exchange may only be allowed with host/gw for two specific reasons
+   # for ICMP and DHCP
+   # but may not be allowed for WAN
+   #
+   elif dict_eth['EtherType'] == 'IPv6':
+      if incoming:
+         if gw_source_mac:
+            if dict_ipv4['source'] == gateway[2]:
+               if known_internal_dest_mac:
+                  # Incoming, gateway <- towards -> known internal hosts
+                  if dict_ipv4['Protocol'] == 'ICMP':
+                     verbose('Allowed, IPv6 ICMP from '+dict_eth['source']+'/'+dict_ipv4['source']+' towards '+dict_eth['destination']+'/'+dict_ipv4['destination'],1)
+                     return True
+                  elif dict_ipv4['Protocol'] == 'UDP':      
+                     for i in range (0, len(gateway[4])):
+                        if gateway[4][i] == int(dict_transport['source']):
+                           verbose("Allowed, IPv6/UDP datagramm from host/GW protocol of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
+                           return True
+                     reason = "non-allowed IPv6/UDP datagramm sent from host/gw of source "+dict_eth['source']+'/'+dict_ipv4['source']+':'+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']                                       
+                  else:
+                     reason = 'IPv6 packet of non-allowed protocol '+dict_transport['Protocol']
+               else:
+                  reason = 'GW sent to not-known internal mac address '+dict_eth['destination']
+            else:
+               # no WAN with IPv6
+               reason = 'IPv6 packet from WAN with ip source '+dict_ipv4['source'] 
+         else:
+            reason = 'not-allowed IPv6 exchange with other hosts except GW '+dict_eth['source']+" to "+dict_eth['destination']   
+
+      else:
+         if gw_dest_mac:
+            if dict_ipv4['destination'] == gateway[2]:
+               if known_internal_source_mac:
+                  # Outcoming known internal hosts <- towards -> gateway
+                  if dict_ipv4['Protocol'] == 'ICMP':
+                     verbose('Allowed, IPv6 ICMP from '+dict_eth['source']+'/'+dict_ipv4['source']+' towards '+dict_eth['destination']+'/'+dict_ipv4['destination'],1)
+                     return True
+                  elif dict_ipv4['Protocol'] == 'UDP':
+                     for i in range (0, len(gateway[4])):
+                        if gateway[4][i] == int(dict_transport['destination']):
+                           verbose("Allowed, IPv6/UDP datagramm from host/GW protocol of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
+                           return True
+                     reason = "non-allowed IPv6/UDP datagramm sent from host/gw of source "+dict_eth['source']+'/'+dict_ipv4['source']+':'+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
+                  else:
+                     reason = 'IPv6 packet of non-allowed protocol '+dict_transport['Protocol']
+               else:
+                  reason = 'not allowed internal mac address '+dict_eth['source']+' attempted to sent to GW'
+            else:
+               # no WAN with IPv6
+               reason = 'IPv6 packet was heading to another host ip addr '+dict_ipv4['destination']
+         else:
+            reason = 'IPv6 packet was heading to '+dict_eth['destination']
+
+
+   #
+   # ARP
+   #
+   # When incoming arp:
+   # It may be from gw, broadcast and from known external hosts towards -> known internal hosts and broadcast
+   # 
+   # When outcoming arp:
+   # It may be from known internal towards -> gateway, broadcast, known external
+   # 
+   elif dict_eth['EtherType'] == 'ARP':            
+
+      if incoming:
+         if gw_source_mac or known_external_source_mac:
+            if known_internal_dest_mac or broadcast_dest_mac:
+               return True
+              
+      else:
+         if known_internal_source_mac:
+            if broadcast_dest_mac or gw_dest_mac or known_external_dest_mac:
+               return True
+      
+      reason = 'Could not allow ARP packet from '+dict_eth['source']+' towards '+dict_eth['destination']
+
    else:
       reason = 'Non-allowed EtherType ['+dict_eth['EtherType']+'] from ['+dict_eth['source']+'].'
 
@@ -275,6 +391,8 @@ def get_ethernet_dict(hex_str_frame):
    EtherType = hex_str_frame[24:28]
    if EtherType == '0800':
       s_EtherType = 'IPv4'
+   elif EtherType == '86dd':
+      s_EtherType = 'IPv6'
    elif EtherType == '0806':
       s_EtherType = 'ARP'
    else:
@@ -287,7 +405,9 @@ def get_ipv4_dict(hex_str_frame):
    protocol = hex_str_frame[28+18:28+18+2]
    source_ip = hex_str_frame[28+18+2+4:28+18+2+4+8]
    destination_ip = hex_str_frame[28+18+2+4+8:28+18+2+4+8+8]
-   if protocol == '06':
+   if protocol == '01':
+     s_prot = 'ICMP'
+   elif protocol == '06':
      s_prot = 'TCP'
    elif protocol == '11':
      s_prot = 'UDP'
@@ -297,17 +417,42 @@ def get_ipv4_dict(hex_str_frame):
    s_dst_ip = str(int(destination_ip[0:2],16))+'.'+str(int(destination_ip[2:4],16))+'.'+str(int(destination_ip[4:6],16))+'.'+str(int(destination_ip[6:8],16))
    return {'Protocol':s_prot,'source':s_source_ip,'destination':s_dst_ip}
 
-def get_udp_dict(hex_str_frame):
-   source = hex_str_frame[68:68+4]
+def get_ipv6_dict(hex_str_frame):
+   header =  hex_str_frame[28:28+80]
+   protocol =  hex_str_frame[28+12:28+12+2]   
+   source_ip = hex_str_frame[28+16:28+16+32]
+   dest_ip = hex_str_frame[28+16+32:28+16+32+32]
+   if protocol == '3a':
+     s_prot = 'ICMP'
+   elif protocol == '06':
+     s_prot = 'TCP'
+   elif protocol == '11':
+     s_prot = 'UDP'
+   else:
+     s_prot = protocol
+   s_source_ip = ':'.join([source_ip[i:i+4] for i in range(0, len(source_ip), 4)])
+   s_dest_ip = ':'.join([dest_ip[i:i+4] for i in range(0, len(dest_ip), 4)])   
+   return {'Protocol':s_prot,'source':s_source_ip,'destination':s_dest_ip}
+
+def get_udp_dict(hex_str_frame,version):
+   if version == 4:
+      offset = 28 + 40
+   else:
+      offset = 28 + 80
+   source = hex_str_frame[offset:offset+4]
    s_source = str(int(source,16))
-   destination = hex_str_frame[68+4:68+4+4]
+   destination = hex_str_frame[offset+4:offset+4+4]
    s_destination = str(int(destination,16))
    return {'source':s_source, 'destination':s_destination}
 
-def get_tcp_dict(hex_str_frame):
-   source = hex_str_frame[68:68+4]
+def get_tcp_dict(hex_str_frame,version):
+   if version == 4:
+      offset = 28 + 40
+   else:
+      offset = 28 + 80
+   source = hex_str_frame[offset:offset+4]
    s_source = str(int(source,16))
-   destination = hex_str_frame[68+4:68+4+4]
+   destination = hex_str_frame[offset+4:offset+4+4]
    s_destination = str(int(destination,16))
    return {'source':s_source, 'destination':s_destination}   
 
@@ -319,17 +464,24 @@ def from_ethA_to_ethB(s1,s2,incoming):
       frame = s1.recvfrom(65565)[0]
       hex_str_frame = binascii.hexlify(frame).decode('ascii')       
       dict_eth = get_ethernet_dict(hex_str_frame)
-      dict_ipv4 = {}
+      dict_ip = {}
       dict_transport = {}
       if dict_eth['EtherType'] == 'IPv4':
-         dict_ipv4 = get_ipv4_dict(hex_str_frame)
-         if dict_ipv4['Protocol'] == 'UDP':
-            dict_transport = get_udp_dict(hex_str_frame)                        
-         elif dict_ipv4['Protocol'] == 'TCP':
-            dict_transport = get_tcp_dict(hex_str_frame)
-      monitor(frame_id,incoming,hex_str_frame,dict_eth,dict_ipv4,dict_transport)
-      if firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transport):
-         s2.send(modify(frame))
+         dict_ip = get_ipv4_dict(hex_str_frame)
+         if dict_ip['Protocol'] == 'UDP':
+            dict_transport = get_udp_dict(hex_str_frame,4)                        
+         elif dict_ip['Protocol'] == 'TCP':
+            dict_transport = get_tcp_dict(hex_str_frame,4)
+      if  dict_eth['EtherType'] == 'IPv6':
+         dict_ip = get_ipv6_dict(hex_str_frame)
+         if dict_ip['Protocol'] == 'UDP':
+            dict_transport = get_udp_dict(hex_str_frame,6)
+         elif dict_ip['Protocol'] == 'TCP':
+            dict_transport = get_tcp_dict(hex_str_frame,6)
+      monitor(frame_id,incoming,hex_str_frame,dict_eth,dict_ip,dict_transport)
+      if firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ip, dict_transport):
+         pass
+      s2.send(modify(frame))
       frame_id = frame_id + 1
 
 try:
