@@ -34,11 +34,16 @@ def verbose(message, type):
         h = '*MONITOR:'
         print(h+' '+message)
 
-def monitor(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transport):
+def monitor(frame_id, allowed_frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transport):
+   # here you may do lots of things 
+   # like collecting statistics, frequency
+   # to print them or to store them in a file
    allow_verbose = False
-   allow_log = False
-   if allow_verbose:
-      print('\n['+hex_str_frame+']\n')      
+   if allow_verbose:      
+      if incoming:
+         print('allowed incoming  packet no: '+str(allowed_frame_id)+' from total incoming received: '+str(frame_id))          
+      else:
+         print('allowed outcoming packet no: '+str(allowed_frame_id)+' from total incoming received: '+str(frame_id))
 
 def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transport):   
    reason = ''
@@ -346,10 +351,10 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
                  else:
                     reason = 'the packet was heading to a known external destination mac with a non verified ip address'                
               else:
-                 # if you are connected with GW over ssh this may fill your screen
+                 # if you are connected with PiWall over ssh this may fill your screen
                  # you may allow a similar filter as the following
                  #if (dict_ipv4['source'] == '192.168.1.X' or dict_ipv4['source'] == '192.168.1.Y') and (dict_ipv4['destination'] == '192.168.1.X' or dict_ipv4['destination'] == '192.168.1.Y'):
-                 #   return False      
+                 #   return False                       
                  reason = 'the packet was heading to a not known external destination mac nor gateway from: '+dict_eth['source']+'/'+dict_ipv4['source']+' towards '+dict_eth['destination']+'/'+dict_ipv4['destination']     
                  
            else:
@@ -612,8 +617,8 @@ def from_ethA_to_ethB(s1,s2,incoming):
       
       if firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ip, dict_transport):         
          s2.send(modify(frame))
-         monitor(frame_id,incoming,hex_str_frame,dict_eth,dict_ip,dict_transport)
          allowed_frame_id = allowed_frame_id + 1
+         monitor(frame_id, allowed_frame_id, incoming,hex_str_frame,dict_eth,dict_ip,dict_transport)         
       frame_id = frame_id + 1
 
 try:
