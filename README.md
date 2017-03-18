@@ -15,7 +15,7 @@ In order to learn more about the project's idea, the implemented project in its 
 
 [..the project's page is currently under dev..]
 
-The PyWall project may be implemented in other Unix/Linux systems as long as the target system has installed three or more network interface cards and is able to install and run the following packages.
+The PyWall project may be implemented in other Unix/Linux systems as long as the target system has three or more network interface cards and is able to install and run the following packages.
 On Debian based systems such as Raspbian you may setup your device as described below:
 
 ## Install Source Code
