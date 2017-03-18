@@ -181,61 +181,58 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
      #print('known_internal_dest_ip ',str(known_internal_dest_ip))
 
      if incoming:        
-        if gw_source_mac:           
-           if not gw_source_ip:                       
-              if known_internal_dest_mac:               
-                 if known_internal_dest_ip:
-                    #IPv4 WAN Incoming traffic                   
+        if known_internal_dest_mac:               
+           if known_internal_dest_ip:
+              # now we are sure that the packet goes to a verified inner host            
+              if gw_source_mac:           
+                 if not gw_source_ip:                       
+                    #IPv4 WAN Incoming traffic <- towards -> a known internal host                   
                     if dict_ipv4['Protocol'] == 'UDP':
                        if is_dest_server:
                           for i in range (0, len(server_allowed_ports)):
                              if server_allowed_ports[i] == int(dict_transport['destination']):
                                 return True
-                          reason = 'WAN incoming traffic: '+dict_ipv4['Protocol']+': verified server '+dict_ipv4['destination']+' received request in a non verified port '+dict_transport['destination']+' from wan ip addr '+dict_ipv4['source']
+                          reason = 'WAN incoming traffic '+dict_ipv4['Protocol']+': verified server '+dict_ipv4['destination']+' received request in a non verified port '+dict_transport['destination']+' from wan ip addr '+dict_ipv4['source']
                        elif int(dict_transport['destination']) >= 1024:
                           return True   
                        else:
-                          reason = 'WAN incoming traffic: '+dict_ipv4['Protocol']+': non-server host '+dict_ipv4['destination']+' received request in a non verified port '+dict_transport['destination']+' from wan ip addr '+dict_ipv4['source']
+                          reason = 'WAN incoming traffic '+dict_ipv4['Protocol']+': non-server host '+dict_ipv4['destination']+' received request in a non verified port '+dict_transport['destination']+' from wan ip addr '+dict_ipv4['source']
                     elif dict_ipv4['Protocol'] == 'TCP':
                        if is_dest_server:
                           for i in range (0, len(server_allowed_ports)):
                              if server_allowed_ports[i] == int(dict_transport['destination']):
                                 return True
-                          reason = 'WAN incoming traffic: '+dict_ipv4['Protocol']+': verified server '+dict_ipv4['destination']+' received request in a non verified port '+dict_transport['destination']+' from wan ip addr '+dict_ipv4['source']
+                          reason = 'WAN incoming traffic '+dict_ipv4['Protocol']+': verified server '+dict_ipv4['destination']+' received request in a non verified port '+dict_transport['destination']+' from wan ip addr '+dict_ipv4['source']
                        elif int(dict_transport['destination']) >= 1024:
                           return True
                        else:
-                          reason = 'WAN incoming traffic: '+dict_ipv4['Protocol']+': non-server host '+dict_ipv4['destination']+' received request in a non verified port '+dict_transport['destination']+' from wan ip addr '+dict_ipv4['source']
+                          reason = 'WAN incoming traffic '+dict_ipv4['Protocol']+': non-server host '+dict_ipv4['destination']+' received request in a non verified port '+dict_transport['destination']+' from wan ip addr '+dict_ipv4['source']
                     else:
                        reason = 'Non allowed transport protocol detected '+dict_ipv4['Protocol']+" from "+dict_ipv4['source']
-                 else:
-                    reason = 'Received peculiar packet from GW for non allowed ip addr'+dict_ipv4['destination']
-              else:
-                  reason = 'Received peculiar frame from GW with non allowed destination mac '+dict_eth['destination']
-           else:
-              # Incoming traffic from gw as a host
-              if dict_ipv4['Protocol'] == 'ICMP':
-                 return True
-              elif dict_ipv4['Protocol'] == 'UDP':
-                 for i in range (0, len(gateway[3])):
-                    if gateway[3][i] == int(dict_transport['source']):                       
-                       verbose("Allowed, IPv4/UDP datagramm from host/GW protocol of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
-                       return True
-                 reason = "non-allowed IPv4/UDP datagramm sent from host/gw of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
-              elif dict_ipv4['Protocol'] == 'TCP':
-                 for i in range (0, len(gateway[3])):
-                    if gateway[3][i] == int(dict_transport['source']):
-                       verbose("Allowed, IPv4/TCP segment from host/GW protocol of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
-                       return True
-                 reason = "non-allowed IPv4/TCP segment sent from host/gw of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
-              else:
-                 reason = "received IPv4 packet from host/GW of non-allowed transport protocol ["+dict_ipv4['Protocol']+"] for "+dict_eth['destination']+'/'+dict_ipv4['destination']
 
-        elif known_external_source_mac:
-           if known_external_source_ip:             
-              if known_internal_dest_mac:
-                 if known_internal_dest_ip:
-                    # Incoming traffic from allowed external hosts
+                 else:                            
+                    # Host/GW incoming traffic <- towards -> a known internal host
+                    if dict_ipv4['Protocol'] == 'ICMP':
+                       verbose('Allowed incoming,  IPv4/ICMP from GW towards '+dict_eth['destination']+'/'+dict_ipv4['destination'],1)
+                       return True
+                    elif dict_ipv4['Protocol'] == 'UDP':
+                       for i in range (0, len(gateway[3])):
+                          if gateway[3][i] == int(dict_transport['source']):                       
+                             verbose("Allowed incoming,  IPv4/UDP datagramm from host/GW towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
+                             return True
+                       reason = "non-allowed IPv4/UDP datagramm sent from host/gw towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
+                    elif dict_ipv4['Protocol'] == 'TCP':
+                       for i in range (0, len(gateway[3])):
+                          if gateway[3][i] == int(dict_transport['source']):
+                             verbose("Allowed incoming,  IPv4/TCP segment from host/GW towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
+                             return True
+                       reason = "non-allowed IPv4/TCP segment sent from host/gw towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
+                    else:
+                       reason = "received IPv4 packet from host/GW of non-allowed transport protocol ["+dict_ipv4['Protocol']+"] for "+dict_eth['destination']+'/'+dict_ipv4['destination']              
+                       
+              elif known_external_source_mac:
+                 if known_external_source_ip:                           
+                    # Incoming traffic from a known external host <- towards -> a known internal host 
                     if dict_ipv4['Protocol'] == 'UDP':
                        if is_dest_server:
                           for i in range (0, len(server_allowed_ports)):
@@ -257,22 +254,108 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
                        else:
                           reason = dict_ipv4['Protocol']+': non-server host '+dict_ipv4['destination']+' received request in a non verified port '+dict_transport['destination']+' from wan ip addr '+dict_ipv4['source']
                     else:
-                       reason = 'Non allowed transport protocol detected '+dict_ipv4['Protocol']+" from "+dict_eth['source']+'/'+dict_ipv4['source']          
+                       reason = 'Non allowed transport protocol detected '+dict_ipv4['Protocol']+" from "+dict_eth['source']+'/'+dict_ipv4['source']                                 
                  else:
-                    reason = 'Wan ip addr '+dict_ipv4['source']+' attempted to connect to non-allowed dest ip addr '+dict_ipv4['destination']
-              elif broadcast_dest_mac:
-                 reason = 'Outer allowed host attempted to broadcast from external, non gw, host '+dict_eth['source']
+                    reason = 'Wan ip addr '+dict_ipv4['source']+' attempted to connect to non-allowed dest ip addr '+dict_ipv4['destination']                                         
               else:
-                 reason = 'Outer allowed host attempted to connect to non-allowed inner host '+dict_eth['destination']
+                 reason = 'Outer non allowed host ['+dict_eth['source']+'] attempted to send to inner host ['+dict_eth['destination']+']'
+                         
            else:
-              reason = 'Could not verify known mac-to-ip relation for allowed external source mac ['+dict_eth['source']+'] carrying ip ['+dict_ipv4['source']+']'                
+              reason = 'outer host '+dict_eth['source']+'/'+dict_ipv4['source']+' attempted to send to a non verified internal host mac in a non verified ip address '+dict_eth['destination']+'/'+dict_ipv4['destination']
+        elif broadcast_dest_mac:
+           reason = 'broadcast is not allowed from external hosts, received from: '+dict_eth['source']
         else:
-           reason = 'Outer non allowed host ['+dict_eth['source']+'] attempted to send to inner host ['+dict_eth['destination']+']'     
-     
-     # outcoming
-     else:
-        #under dev        
-        return True
+           reason = 'outer host '+dict_eth['source']+' attempted to send to non verified internal mac host '+dict_eth['destination']              
+           
+     # outcoming traffic
+     else:    
+        if known_internal_source_mac:               
+           if known_internal_source_ip:                 
+              # now we are sure that the packet leaves from a known inner host
+              if gw_dest_mac:           
+                 if not gw_dest_ip:                                     
+                    #IPv4 WAN outcoming traffic                   
+                    if dict_ipv4['Protocol'] == 'UDP':
+                       if is_source_server:
+                          for i in range (0, len(server_allowed_ports)):
+                             if server_allowed_ports[i] == int(dict_transport['source']):
+                                return True
+                          reason = 'WAN outcoming traffic: '+dict_ipv4['Protocol']+': verified server '+dict_ipv4['source']+' attempted to send from a non allowed port '+dict_transport['source']+' towards client wan ip addr '+dict_ipv4['destination']+':'+dict_transport['destination']
+                       elif int(dict_transport['source']) >= 1024:
+                          return True   
+                       else:
+                          reason = 'WAN outcoming traffic: '+dict_ipv4['Protocol']+': non-server host '+dict_ipv4['source']+' attempted to send from a not allowed port '+dict_transport['source']+' towards wan ip addr '+dict_ipv4['destination']+':'+dict_transport['destination']
+                    elif dict_ipv4['Protocol'] == 'TCP':
+                       if is_source_server:
+                          for i in range (0, len(server_allowed_ports)):
+                             if server_allowed_ports[i] == int(dict_transport['source']):
+                                return True
+                          reason = 'WAN outcoming traffic: '+dict_ipv4['Protocol']+': verified server '+dict_ipv4['source']+' attempted to send from a non allowed port '+dict_transport['source']+' towards client wan ip addr '+dict_ipv4['destination']+':'+dict_transport['destination']
+                       elif int(dict_transport['source']) >= 1024:
+                          return True   
+                       else:
+                          reason = 'WAN outcoming traffic: '+dict_ipv4['Protocol']+': non-server host '+dict_ipv4['source']+' attempted to send from a not allowed port '+dict_transport['source']+' towards wan ip addr '+dict_ipv4['destination']+':'+dict_transport['destination']
+                    else:
+                       reason = 'Non allowed transport protocol detected '+dict_ipv4['Protocol']+" from "+dict_ipv4['source']              
+
+                 else:
+                    # Outoming traffic from a known internal host <- towards -> gw as a host
+                    if dict_ipv4['Protocol'] == 'ICMP':
+                       verbose('Allowed outcoming, IPv4/ICMP from inner host '+dict_eth['source']+'/'+dict_ipv4['source']+' towards GW',1)
+                       return True
+                    elif dict_ipv4['Protocol'] == 'UDP':
+                       for i in range (0, len(gateway[3])):
+                          if gateway[3][i] == int(dict_transport['destination']):                       
+                             verbose("Allowed, IPv4/UDP datagramm from inner host: "+dict_eth['source']+'/'+dict_ipv4['source']+':'+dict_transport['source']+" towards GW in port "+dict_transport['destination'],1)
+                             return True
+                       reason = 'non allowed, IPv4/UDP datagramm from inner host: '+dict_eth['source']+'/'+dict_ipv4['source']+':'+dict_transport['source']+" towards GW in port "+dict_transport['destination']
+                    elif dict_ipv4['Protocol'] == 'TCP':
+                       for i in range (0, len(gateway[3])):
+                          if gateway[3][i] == int(dict_transport['destination']):                       
+                             verbose("Allowed, IPv4/TCP segment from inner host: "+dict_eth['source']+'/'+dict_ipv4['source']+':'+dict_transport['source']+" towards GW in port "+dict_transport['destination'],1)
+                             return True
+                       reason = 'non allowed, IPv4/TCP segment from inner host: '+dict_eth['source']+'/'+dict_ipv4['source']+':'+dict_transport['source']+" towards GW in port "+dict_transport['destination']
+                    else:
+                       reason = "received IPv4 packet from known internal host of non-allowed transport protocol ["+dict_ipv4['Protocol']+"] from "+dict_eth['source']+'/'+dict_ipv4['source']
+              
+              elif known_external_dest_mac:
+                 if known_external_dest_ip:             
+                    # Incoming traffic from allowed internal hosts <- towards -> allowed external hosts
+                    if dict_ipv4['Protocol'] == 'UDP':
+                       if is_source_server:
+                          for i in range (0, len(server_allowed_ports)):
+                             if server_allowed_ports[i] == int(dict_transport['source']):
+                                return True
+                          reason = 'verified server attempted to send from a non verified port'
+                       elif int(dict_transport['source']) >= 1024:
+                          return True
+                       else:
+                          reason = ''
+                    elif dict_ipv4['Protocol'] == 'TCP':
+                       if is_dest_server:
+                          for i in range (0, len(server_allowed_ports)):
+                             if server_allowed_ports[i] == int(dict_transport['source']):
+                                return True
+                          reason = 'verified server attempted to send from a non verified port'
+                       elif int(dict_transport['source']) >= 1024:
+                          return True
+                       else:
+                          reason = 'non verified server attempted to send from a non verified port'
+                    else:
+                       reason = 'not allowed protocol'          
+                 else:
+                    reason = 'the packet was heading to a known external destination mac with a non verified ip address'                
+              else:
+                 # if you are connected with GW over ssh this may fill your screen
+                 # you may allow a similar filter as the following
+                 #if (dict_ipv4['source'] == '192.168.1.X' or dict_ipv4['source'] == '192.168.1.Y') and (dict_ipv4['destination'] == '192.168.1.X' or dict_ipv4['destination'] == '192.168.1.Y'):
+                 #   return False      
+                 reason = 'the packet was heading to a not known external destination mac nor gateway from: '+dict_eth['source']+'/'+dict_ipv4['source']+' towards '+dict_eth['destination']+'/'+dict_ipv4['destination']     
+                 
+           else:
+              reason = 'Known internal host mac attempted to send to external network with a non allowed ip address'+dict_eth['source']+'/'+dict_ipv4['source']
+        else:
+            reason = 'Not known internal host mac '+dict_eth['source']+' attempted to send to external network.'
 
      #
      # DHCP
@@ -314,12 +397,12 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
                if known_internal_dest_mac:
                   # Incoming, gateway <- towards -> known internal hosts
                   if dict_ipv4['Protocol'] == 'ICMP':
-                     verbose('Allowed incoming, IPv6 ICMP from '+dict_eth['source']+'/'+dict_ipv4['source']+' towards '+dict_eth['destination']+'/'+dict_ipv4['destination'],1)
+                     verbose('Allowed incoming,  IPv6 ICMP from '+dict_eth['source']+'/'+dict_ipv4['source']+' towards '+dict_eth['destination']+'/'+dict_ipv4['destination'],1)
                      return True
                   elif dict_ipv4['Protocol'] == 'UDP':      
                      for i in range (0, len(gateway[4])):
                         if gateway[4][i] == int(dict_transport['source']):
-                           verbose("Allowed incoming, IPv6/UDP datagramm from host/GW protocol of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
+                           verbose("Allowed incoming,  IPv6/UDP datagramm from host/GW protocol of source "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
                            return True
                      reason = "non-allowed IPv6/UDP datagramm sent from host/gw of source "+dict_eth['source']+'/'+dict_ipv4['source']+':'+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']                                       
                   else:
@@ -386,21 +469,23 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
    # ARP
    #
    # When incoming arp:
-   # It may be from gw, broadcast and from known external hosts towards -> known internal hosts and broadcast
+   # It may be from gw and from [known external hosts] <- towards -> [known internal hosts and broadcast]
    # 
    # When outcoming arp:
-   # It may be from known internal towards -> gateway, broadcast, known external
+   # It may be from [known internal] <- towards -> [gateway, broadcast, known external]
    # 
    elif dict_eth['EtherType'] == 'ARP':            
 
       if incoming:
          if gw_source_mac or known_external_source_mac:
             if known_internal_dest_mac or broadcast_dest_mac:
+               verbose('Allowed incoming,  ARP from '+dict_eth['source']+' towards '+dict_eth['destination'],1)
                return True
               
       else:
          if known_internal_source_mac:
             if broadcast_dest_mac or gw_dest_mac or known_external_dest_mac:
+               verbose('Allowed outcoming, ARP from '+dict_eth['source']+' towards '+dict_eth['destination'],1)               
                return True
       
       reason = 'Could not allow ARP packet from '+dict_eth['source']+' towards '+dict_eth['destination']
@@ -504,6 +589,8 @@ def get_tcp_dict(hex_str_frame,version):
 def from_ethA_to_ethB(s1,s2,incoming):
    print("started "+str(incoming))
    frame_id = 0 
+   allowed_frame_id = 0
+
    while True:
       frame = s1.recvfrom(65565)[0]
       hex_str_frame = binascii.hexlify(frame).decode('ascii')       
@@ -522,10 +609,11 @@ def from_ethA_to_ethB(s1,s2,incoming):
             dict_transport = get_udp_dict(hex_str_frame,6)
          elif dict_ip['Protocol'] == 'TCP':
             dict_transport = get_tcp_dict(hex_str_frame,6)
-      monitor(frame_id,incoming,hex_str_frame,dict_eth,dict_ip,dict_transport)
-      if firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ip, dict_transport):
-         pass
-      s2.send(modify(frame))
+      
+      if firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ip, dict_transport):         
+         s2.send(modify(frame))
+         monitor(frame_id,incoming,hex_str_frame,dict_eth,dict_ip,dict_transport)
+         allowed_frame_id = allowed_frame_id + 1
       frame_id = frame_id + 1
 
 try:
