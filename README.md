@@ -115,7 +115,7 @@ Functional:
 * Known internal and external Mac-to-Ip table to prevent IP address spoofing
 * Only gateway may serve packets from multiple ip adresses.
 * Gateway may be treated as a host and allow/block services like HTTP, DNS
-* Let's you define whether an internal or external network  host may be treated as a server and which ports may be allowed
+* Lets you define whether an internal or external network  host may be treated as a server and which ports may be allowed
 * Defined policies about ARP, IPv4: ICMP, DHCP, IPv6: ICMP, DHCP
 * Multi-scale verbose level to let you define the amount of information you would like to receive
 
