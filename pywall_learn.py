@@ -1,6 +1,6 @@
 """
-piwall-learn.py: Here is the core logic of PiWall in order to easily understand 
-the logic behind piwall and how the traffic forwarding mechanism is achieved.
+pywall-learn.py: Here is the core logic of PiWall in order to easily understand 
+the logic behind pywall and how the traffic forwarding mechanism is achieved.
 """
 
 __author__ = "Konstantinos Kagiampakis"

@@ -1,5 +1,5 @@
 """
-piwall.py: Here is the main logic of PiWall and your canvas as well!
+pywall.py: Here is the main logic of PyWall and your canvas as well!
 You may define any kind of rule to either monitor, firewall or change your traffic.
 """
 
