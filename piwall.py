@@ -34,7 +34,7 @@ def verbose(message, type):
         h = '*MONITOR:'
         print(h+' '+message)
 
-def monitor(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transport):
+def monitor(frame_id, allowed_frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transport):
    allow_verbose = False
    allow_log = False
    if allow_verbose:
@@ -612,7 +612,7 @@ def from_ethA_to_ethB(s1,s2,incoming):
       
       if firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ip, dict_transport):         
          s2.send(modify(frame))
-         monitor(frame_id,incoming,hex_str_frame,dict_eth,dict_ip,dict_transport)
+         monitor(frame_id, allowed_frame_id, incoming,hex_str_frame,dict_eth,dict_ip,dict_transport)
          allowed_frame_id = allowed_frame_id + 1
       frame_id = frame_id + 1
 
