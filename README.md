@@ -32,7 +32,7 @@ Edit configure.py in order to set your personalised network settings.
 ```
 cd PiWall
 nano configure.py
-nano firewall.py
+nano piwall.py
 ```
 
 ## Run
@@ -107,14 +107,16 @@ Data:
 * Knows when a mac address is broadcast, zero, gateway, internal or external host.
 * Lets you use IPv4 source and destination address as well as transmition protocol type
 * Knows when an ip address is broadcast zero or host-reserved
-* Lets you use source port and destination port of TCP, UDP protocols
+* Lets you use source port and destination port of TCP, UDP protocols over IPv4 or IPv6
+* Lets you use IPv6 source destination address and transmition protocol
 
 Functional:
 * PiWall has external host mac whitelist and internal host mac whitelist to filter trafic
-* Known internal Mac-to-Ip table to prevent IP address spoofing
-* Only GateWay may serve packets from multiple ip adresses.
-* Let's you define whether a host may be treated as a server and which ports are allowed
-* Defined policies about ARP, IPv4 and DHCP protocol behaviours
+* Known internal and external Mac-to-Ip table to prevent IP address spoofing
+* Only gateway may serve packets from multiple ip adresses.
+* Gateway may be treated as a host and allow/block services like HTTP, DNS
+* Let's you define whether an internal or external network  host may be treated as a server and which ports may be allowed
+* Defined policies about ARP, IPv4: ICMP, DHCP, IPv6: ICMP, DHCP
 * Multi-scale verbose level to let you define the amount of information you would like to receive
 
 ## License
