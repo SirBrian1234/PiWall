@@ -218,15 +218,15 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
                     elif dict_ipv4['Protocol'] == 'UDP':
                        for i in range (0, len(gateway[3])):
                           if gateway[3][i] == int(dict_transport['source']):                       
-                             verbose("Allowed incoming,  IPv4/UDP datagramm from host/GW towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
+                             verbose("Allowed incoming,  IPv4/UDP datagramm from host/GW, port "+dict_transport['source']+"  towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
                              return True
-                       reason = "non-allowed IPv4/UDP datagramm sent from host/gw towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
+                       reason = "non-allowed IPv4/UDP datagramm sent from host/gw, port "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
                     elif dict_ipv4['Protocol'] == 'TCP':
                        for i in range (0, len(gateway[3])):
                           if gateway[3][i] == int(dict_transport['source']):
-                             verbose("Allowed incoming,  IPv4/TCP segment from host/GW towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
+                             verbose("Allowed incoming,  IPv4/TCP segment from host/GW, port "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination'],1)
                              return True
-                       reason = "non-allowed IPv4/TCP segment sent from host/gw towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
+                       reason = "non-allowed IPv4/TCP segment sent from host/gw, port "+dict_transport['source']+" towards "+dict_eth['destination']+'/'+dict_ipv4['destination']+':'+dict_transport['destination']
                     else:
                        reason = "received IPv4 packet from host/GW of non-allowed transport protocol ["+dict_ipv4['Protocol']+"] for "+dict_eth['destination']+'/'+dict_ipv4['destination']              
                        
