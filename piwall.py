@@ -270,9 +270,14 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
      # outcoming traffic
      else:    
         if known_internal_source_mac:               
-           if known_internal_source_ip:                 
-              # now we are sure that the packet leaves from a known inner host
-              if gw_dest_mac:           
+           if known_internal_source_ip:
+           # now we are sure that the packet leaves from a known inner host
+              if known_internal_dest_mac:
+                 # we should protect our inner network traffic between inner hosts from getting outside to avoid sniffs
+                 # this may generate a lot of noise so there will be silent drop
+                 # this goes first for speed
+                 return False                              
+              elif gw_dest_mac:           
                  if not gw_dest_ip:                                     
                     #IPv4 WAN outcoming traffic                   
                     if dict_ipv4['Protocol'] == 'UDP':
@@ -344,14 +349,9 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
                     else:
                        reason = 'not allowed protocol'          
                  else:
-                    reason = 'the packet was heading to a known external destination mac with a non verified ip address'                
-              else:
-                 # if you are connected with GW over ssh this may fill your screen
-                 # you may allow a similar filter as the following
-                 #if (dict_ipv4['source'] == '192.168.1.X' or dict_ipv4['source'] == '192.168.1.Y') and (dict_ipv4['destination'] == '192.168.1.X' or dict_ipv4['destination'] == '192.168.1.Y'):
-                 #   return False      
-                 reason = 'the packet was heading to a not known external destination mac nor gateway from: '+dict_eth['source']+'/'+dict_ipv4['source']+' towards '+dict_eth['destination']+'/'+dict_ipv4['destination']     
-                 
+                    reason = 'the packet was heading to a known external destination mac with a non verified ip address'                         
+              else:                
+                 reason = 'the packet was heading to a not known external destination mac nor gateway from: '+dict_eth['source']+'/'+dict_ipv4['source']+' towards '+dict_eth['destination']+'/'+dict_ipv4['destination']      
            else:
               reason = 'Known internal host mac attempted to send to external network with a non allowed ip address'+dict_eth['source']+'/'+dict_ipv4['source']
         else:
