@@ -52,7 +52,7 @@ sudo nano /etc/init.d/init_piwall
 #!/bin/bash
 
 ### BEGIN INIT INFO
-# Provides: init_piwall
+# Provides: init_gps
 # Required-Start: $all
 # Required-Stop:
 # Default-Start: 4
@@ -63,12 +63,27 @@ sudo nano /etc/init.d/init_piwall
 
 (
 ifconfig eth0 down
-ifconfig eth1 up
+ifconfig eth1 down
+ifconfig eth2 down
+
 ifconfig eth1 promisc
-ifconfig eth2 up
 ifconfig eth2 promisc
+
+# eth1 has to be connected towards the external network
+# in order to not let external users access piwall
+# we need to reject all requests to its eth1 ip address
+# you may  get the ip with ifconfig if the dhcp
+# server rememebrs ip addresses or you may set a static ip for eth1
+# do not deny all traffic from eth1 as you will drop the bridge
+sudo iptables -I INPUT 1 -d X.X.X.X/32 -j REJECT
+sudo iptables -I OUTPUT 1 -s X.X.X.X/32 -j REJECT
+
+ifconfig eth1 up
+ifconfig eth2 up
+
 sleep 5
 sudo python3 /home/pi/PiWall/piwall.py &
+
 sleep 10
 ifconfig eth0 up
 ) > /home/pi/init_piwall.log
