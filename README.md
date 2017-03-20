@@ -1,5 +1,3 @@
-# Under Dev
-
 # PiWall
 The PiWall project is a Raspberry Pi based, secure and standalone low-level (Layer 2 OSI) network firewall with enchanced flexibility as its rules and policies may directly be defined in Python (3.4).
 
@@ -11,7 +9,7 @@ PiWall can:
 * Provide live information for all the above
 
 In order to learn more about PiWall, how PiWall works, how to build and set up your own device, please visit PiWall's project page from here:
-[..the project's page is currently under dev..]
+https://kostiskag.wordpress.com/2017/03/24/piwall-how-to-build-a-game-changing-flexible-low-level-network-firewall/
 
 ## Install Source Code
 In order to install the project's source code from your raspberry pi/raspbian run the following commands:
