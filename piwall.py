@@ -52,9 +52,6 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
    broadcast_source_mac = False
    broadcast_dest_mac = False
 
-   piwall_source_mac = False
-   piwall_dest_mac = False
-
    gw_source_mac = False
    gw_dest_mac = False
 
@@ -75,7 +72,10 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
 
    if incoming:
       if not zero_source_mac and not broadcast_source_mac:
-          if dict_eth['source'] == gateway[0].lower():
+          if dict_eth['source'] == piwall_eth1_mac.lower() or dict_eth['source'] == piwall_eth2_mac.lower():
+             return False
+
+          elif dict_eth['source'] == gateway[0].lower():
              gw_source_mac = True
              
           else:
@@ -86,7 +86,7 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
 
       if not zero_dest_mac and not broadcast_dest_mac:
          if dict_eth['destination'] == piwall_eth1_mac.lower() or dict_eth['destination'] == piwall_eth2_mac.lower():
-            piwall_dest_mac = True         
+            return False
 
          else:
             for i in range (0, len(allowed_internal_hosts)):
@@ -96,10 +96,13 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
                                         
    else:
       if not zero_dest_mac and not broadcast_dest_mac:
-          if dict_eth['destination'] == gateway[0].lower():
+         if dict_eth['destination'] == piwall_eth1_mac.lower() or dict_eth['destination'] == piwall_eth2_mac.lower():
+            return False
+ 
+         elif dict_eth['destination'] == gateway[0].lower():
              gw_dest_mac = True
              
-          else:
+         else:
              for i in range (0, len(allowed_external_hosts)):
                 if allowed_external_hosts[i][0].lower()==dict_eth['destination']:
                    known_external_dest_mac = True                   
@@ -107,7 +110,8 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
 
       if not zero_source_mac and not broadcast_source_mac:
           if dict_eth['source'] == piwall_eth1_mac.lower() or dict_eth['source'] == piwall_eth2_mac.lower(): 
-             piwall_source_mac = True
+             return False
+
           else:
              for i in range (0, len(allowed_internal_hosts)):
                 if allowed_internal_hosts[i][0].lower()==dict_eth['source']:
@@ -190,13 +194,8 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
      #print('known_external_dest_ip ',str(known_external_dest_ip))
      #print('known_internal_dest_ip ',str(known_internal_dest_ip))
 
-     if incoming:        
-        if piwall_source_mac or piwall_dest_mac:
-           # someone attempted to access the interface on itself or there is a u-turn
-           # silent drop here
-           return False
-
-        elif known_internal_dest_mac:               
+     if incoming:               
+        if known_internal_dest_mac:               
            if known_internal_dest_ip:
               # now we are sure that the packet goes to a verified inner host            
               if gw_source_mac:           
@@ -284,12 +283,7 @@ def firewall(frame_id, incoming, hex_str_frame, dict_eth, dict_ipv4, dict_transp
            
      # outcoming traffic
      else:    
-        if piwall_source_mac or piwall_dest_mac:
-           # someone attempted to access the interface on itself or there is a u-turn
-           # silent drop here
-           return False
-
-        elif known_internal_source_mac:               
+        if known_internal_source_mac:               
            if known_internal_source_ip:
            # now we are sure that the packet leaves from a known inner host
               if known_internal_dest_mac:
